@@ -1,0 +1,1063 @@
+-- МАКВАНГ v2.3 FINAL
+local p=game:GetService("Players")
+local l=p.LocalPlayer
+local pg=l:WaitForChild("PlayerGui")
+local r=game:GetService("RunService")
+local u=game:GetService("UserInputService")
+local tsv=game:GetService("TweenService")
+
+pcall(function()
+for _,v in ipairs(pg:GetChildren()) do
+if v.Name:find("^MKV_") then v:Destroy() end
+end
+for _,v in ipairs(game:GetService("CoreGui"):GetChildren()) do
+if v.Name:find("^MKV_") then v:Destroy() end
+end
+end)
+
+local c=l.Character or l.CharacterAdded:Wait()
+local h=c:FindFirstChildOfClass("Humanoid") or c:WaitForChild("Humanoid",10)
+if not h then repeat task.wait() h=c:FindFirstChildOfClass("Humanoid") until h end
+
+local g={}
+pcall(function()
+local gg=getgenv and getgenv() or _G
+if gg then
+g.Mode=gg.MKV_Mode or "direct"
+g.Theme=gg.MKV_Theme or "white"
+g.AutoRange=tonumber(gg.MKV_AutoRange) or 20
+g.ShowCircle=gg.MKV_ShowCircle
+if g.ShowCircle==nil then g.ShowCircle=false end
+g.AutoMagnet=gg.MKV_AutoMagnet or false
+g.Saved=gg.MKV_Saved
+g.Friends=gg.MKV_Friends or {}
+g._ref=gg
+end
+end)
+g.Mode=g.Mode or "direct"
+g.Theme=g.Theme or "white"
+g.AutoRange=g.AutoRange or 20
+if g.ShowCircle==nil then g.ShowCircle=false end
+g.AutoMagnet=g.AutoMagnet or false
+g.Friends=g.Friends or {}
+g.Target=nil
+g.MagnetOn=false
+local MAGNET_SPEED=16
+
+local function saveG()
+pcall(function()
+if g._ref then
+g._ref.MKV_Mode=g.Mode
+g._ref.MKV_Theme=g.Theme
+g._ref.MKV_AutoRange=g.AutoRange
+g._ref.MKV_ShowCircle=g.ShowCircle
+g._ref.MKV_AutoMagnet=g.AutoMagnet
+g._ref.MKV_Saved=g.Saved
+g._ref.MKV_Friends=g.Friends
+end
+end)
+end
+
+local Themes={
+white={
+BG=Color3.fromRGB(250,250,250),
+CARD=Color3.fromRGB(240,240,242),
+BTN=Color3.fromRGB(230,230,235),
+ACC=Color3.fromRGB(220,50,50),
+ACC_D=Color3.fromRGB(180,35,35),
+TXT=Color3.fromRGB(30,30,35),
+SUB=Color3.fromRGB(120,120,130),
+GOLD=Color3.fromRGB(200,160,60),
+GREEN=Color3.fromRGB(50,200,100),
+},
+black={
+BG=Color3.fromRGB(20,20,25),
+CARD=Color3.fromRGB(32,32,38),
+BTN=Color3.fromRGB(45,45,52),
+ACC=Color3.fromRGB(220,50,50),
+ACC_D=Color3.fromRGB(180,35,35),
+TXT=Color3.fromRGB(240,240,245),
+SUB=Color3.fromRGB(150,150,165),
+GOLD=Color3.fromRGB(230,190,80),
+GREEN=Color3.fromRGB(60,220,110),
+},
+}
+local T=Themes[g.Theme] or Themes.white
+
+local sg=Instance.new("ScreenGui")
+sg.Name="MKV_"..tostring(tick())
+sg.ResetOnSpawn=false
+sg.IgnoreGuiInset=true
+sg.DisplayOrder=999999
+sg.ZIndexBehavior=Enum.ZIndexBehavior.Global
+pcall(function() sg.Parent=pg end)
+if not sg.Parent then pcall(function() sg.Parent=game:GetService("CoreGui") end) end
+g.sg=sg
+
+local themeRegistry={}
+local function reg(obj,prop,key)
+themeRegistry[#themeRegistry+1]={obj=obj,prop=prop,key=key}
+end
+
+local b=Instance.new("TextButton")
+b.Size=UDim2.new(0,50,0,50)
+b.Position=UDim2.new(0.5,-25,0.05,0)
+b.BackgroundColor3=T.BG
+b.Text="🏎️"
+b.TextScaled=true
+b.Font=Enum.Font.FredokaOne
+b.ZIndex=10
+b.AutoButtonColor=false
+b.Active=true
+b.Parent=sg
+Instance.new("UICorner",b).CornerRadius=UDim.new(0,12)
+local bst=Instance.new("UIStroke",b)
+bst.Thickness=2
+bst.Color=T.ACC
+reg(b,"BackgroundColor3","BG")
+reg(bst,"Color","ACC")
+
+local f=Instance.new("Frame")
+f.Size=UDim2.new(0,460,0,430)
+f.Position=UDim2.new(0.5,-230,0.5,-215)
+f.BackgroundColor3=T.BG
+f.BorderSizePixel=0
+f.Visible=false
+f.ZIndex=5
+f.Active=true
+f.Parent=sg
+Instance.new("UICorner",f).CornerRadius=UDim.new(0,10)
+local fs=Instance.new("UIStroke",f)
+fs.Thickness=1
+fs.Color=T.ACC
+reg(f,"BackgroundColor3","BG")
+reg(fs,"Color","ACC")
+
+local hd=Instance.new("TextButton")
+hd.Size=UDim2.new(1,0,0,28)
+hd.BackgroundColor3=T.BG
+hd.BackgroundTransparency=0.3
+hd.BorderSizePixel=0
+hd.Text="МАКВАНГ  🏎️  [ТЯНУТЬ]"
+hd.TextColor3=T.TXT
+hd.TextSize=13
+hd.Font=Enum.Font.GothamBold
+hd.ZIndex=9
+hd.AutoButtonColor=false
+hd.Active=true
+hd.Parent=f
+Instance.new("UICorner",hd).CornerRadius=UDim.new(0,10)
+reg(hd,"TextColor3","TXT")
+
+local tabBar=Instance.new("Frame")
+tabBar.Size=UDim2.new(1,-16,0,32)
+tabBar.Position=UDim2.new(0,8,0,32)
+tabBar.BackgroundColor3=T.CARD
+tabBar.BorderSizePixel=0
+tabBar.ZIndex=7
+tabBar.Parent=f
+Instance.new("UICorner",tabBar).CornerRadius=UDim.new(0,6)
+reg(tabBar,"BackgroundColor3","CARD")
+local tl=Instance.new("UIListLayout",tabBar)
+tl.FillDirection=Enum.FillDirection.Horizontal
+tl.Padding=UDim.new(0,2)
+tl.VerticalAlignment=Enum.VerticalAlignment.Center
+
+local content=Instance.new("Frame")
+content.Size=UDim2.new(1,-16,1,-80)
+content.Position=UDim2.new(0,8,0,68)
+content.BackgroundColor3=T.CARD
+content.BorderSizePixel=0
+content.ZIndex=6
+content.Parent=f
+Instance.new("UICorner",content).CornerRadius=UDim.new(0,6)
+content.ClipsDescendants=true
+reg(content,"BackgroundColor3","CARD")
+
+local pages={}
+local tabButtons={}
+
+local function mkTab(name)
+local tb=Instance.new("TextButton")
+tb.Size=UDim2.new(0,90,1,-4)
+tb.BackgroundColor3=T.CARD
+tb.BorderSizePixel=0
+tb.Text=name
+tb.TextColor3=T.SUB
+tb.TextSize=11
+tb.Font=Enum.Font.GothamBold
+tb.ZIndex=8
+tb.AutoButtonColor=false
+tb.Active=true
+tb.Parent=tabBar
+Instance.new("UICorner",tb).CornerRadius=UDim.new(0,5)
+local page=Instance.new("ScrollingFrame")
+page.Size=UDim2.new(1,0,1,0)
+page.BackgroundTransparency=1
+page.BorderSizePixel=0
+page.ScrollBarThickness=5
+page.ScrollBarImageColor3=T.ACC
+page.AutomaticCanvasSize=Enum.AutomaticSize.Y
+page.ScrollingDirection=Enum.ScrollingDirection.Y
+page.CanvasSize=UDim2.new(0,0,0,0)
+page.ZIndex=7
+page.Visible=false
+page.Parent=content
+local pY=8
+pages[name]={btn=tb,page=page,getY=function() return pY end,setY=function(v) pY=v end}
+tabButtons[#tabButtons+1]={btn=tb,name=name}
+tb.MouseButton1Click:Connect(function()
+for n,pg2 in pairs(pages) do
+pg2.page.Visible=(n==name)
+pcall(function()
+tsv:Create(pg2.btn,TweenInfo.new(0.15),{TextColor3=n==name and Color3.fromRGB(255,255,255) or T.SUB,BackgroundColor3=n==name and T.ACC or T.CARD}):Play()
+end)
+end
+end)
+return pages[name]
+end
+
+mkTab("👁️‍🗨️ ЦЕЛИ")
+mkTab("🔩 НАСТРОЙКИ")
+mkTab("📃 ДРУЗЬЯ")
+
+pages["👁️‍🗨️ ЦЕЛИ"].page.Visible=true
+pages["👁️‍🗨️ ЦЕЛИ"].btn.TextColor3=Color3.fromRGB(255,255,255)
+pages["👁️‍🗨️ ЦЕЛИ"].btn.BackgroundColor3=T.ACC
+
+local function mkSection(tabName,txt)
+local tab=pages[tabName]
+if not tab then return end
+local Y=tab.getY()
+local lb=Instance.new("TextLabel")
+lb.Size=UDim2.new(1,-16,0,20)
+lb.Position=UDim2.new(0,8,0,Y)
+lb.BackgroundColor3=T.BG
+lb.BorderSizePixel=0
+lb.Text="   "..txt
+lb.TextColor3=T.TXT
+lb.TextSize=11
+lb.Font=Enum.Font.GothamBold
+lb.TextXAlignment=Enum.TextXAlignment.Left
+lb.ZIndex=8
+lb.Parent=tab.page
+Instance.new("UICorner",lb).CornerRadius=UDim.new(0,4)
+reg(lb,"BackgroundColor3","BG")
+reg(lb,"TextColor3","TXT")
+tab.setY(Y+24)
+end
+
+local function mkSlider(tabName,label,min,max,def,cb)
+local tab=pages[tabName]
+if not tab then return end
+def=tonumber(def) or min
+local Y=tab.getY()
+local lb=Instance.new("TextLabel")
+lb.Size=UDim2.new(1,-24,0,14)
+lb.Position=UDim2.new(0,12,0,Y)
+lb.BackgroundTransparency=1
+lb.Text=label..": "..string.format("%.0f",def)
+lb.TextColor3=T.SUB
+lb.TextSize=11
+lb.Font=Enum.Font.Gotham
+lb.TextXAlignment=Enum.TextXAlignment.Left
+lb.ZIndex=8
+lb.Parent=tab.page
+reg(lb,"TextColor3","SUB")
+tab.setY(Y+16)
+local tb=Instance.new("TextButton")
+tb.Size=UDim2.new(1,-24,0,14)
+tb.Position=UDim2.new(0,12,0,Y+16)
+tb.BackgroundColor3=T.BTN
+tb.Text=""
+tb.ZIndex=8
+tb.AutoButtonColor=false
+tb.Active=true
+tb.Parent=tab.page
+Instance.new("UICorner",tb).CornerRadius=UDim.new(1,0)
+reg(tb,"BackgroundColor3","BTN")
+local fl=Instance.new("Frame")
+fl.Size=UDim2.new((def-min)/(max-min),0,1,0)
+fl.BackgroundColor3=T.ACC
+fl.BorderSizePixel=0
+fl.ZIndex=9
+fl.Parent=tb
+Instance.new("UICorner",fl).CornerRadius=UDim.new(1,0)
+reg(fl,"BackgroundColor3","ACC")
+local knob=Instance.new("TextLabel")
+knob.Size=UDim2.new(0,22,0,22)
+knob.Position=UDim2.new(1,-11,0.5,-11)
+knob.BackgroundColor3=T.BG
+knob.Text="🛞"
+knob.TextScaled=true
+knob.ZIndex=11
+knob.Parent=tb
+Instance.new("UICorner",knob).CornerRadius=UDim.new(1,0)
+reg(knob,"BackgroundColor3","BG")
+local ks=Instance.new("UIStroke",knob)
+ks.Thickness=1.5
+ks.Color=T.ACC
+reg(ks,"Color","ACC")
+tab.setY(Y+24)
+local dr=false
+local function upd(x)
+local rel=math.clamp((x-tb.AbsolutePosition.X)/math.max(tb.AbsoluteSize.X,1),0,1)
+fl.Size=UDim2.new(rel,0,1,0)
+local v=min+rel*(max-min)
+lb.Text=label..": "..string.format("%.0f",v)
+if cb then pcall(cb,v) end
+end
+tb.InputBegan:Connect(function(i)
+if i.UserInputType==Enum.UserInputType.MouseButton1 or i.UserInputType==Enum.UserInputType.Touch then dr=true; upd(i.Position.X) end
+end)
+u.InputChanged:Connect(function(i)
+if dr and (i.UserInputType==Enum.UserInputType.MouseMovement or i.UserInputType==Enum.UserInputType.Touch) then upd(i.Position.X) end
+end)
+u.InputEnded:Connect(function(i)
+if i.UserInputType==Enum.UserInputType.MouseButton1 or i.UserInputType==Enum.UserInputType.Touch then dr=false end
+end)
+return {set=function(v)
+v=tonumber(v) or min
+local rel=(v-min)/(max-min)
+fl.Size=UDim2.new(rel,0,1,0)
+lb.Text=label..": "..string.format("%.0f",v)
+end}
+end
+
+local buttonsRegistry={}
+local function mkBtn(tabName,txt,fn,color)
+local tab=pages[tabName]
+if not tab then return end
+local Y=tab.getY()
+local btn=Instance.new("TextButton")
+btn.Size=UDim2.new(1,-24,0,26)
+btn.Position=UDim2.new(0,12,0,Y)
+btn.BackgroundColor3=T.BTN
+btn.BorderSizePixel=0
+btn.Text="  "..txt
+btn.TextColor3=T.TXT
+btn.TextSize=11
+btn.Font=Enum.Font.Gotham
+btn.TextXAlignment=Enum.TextXAlignment.Left
+btn.ZIndex=8
+btn.AutoButtonColor=false
+btn.Active=true
+btn.Parent=tab.page
+Instance.new("UICorner",btn).CornerRadius=UDim.new(0,5)
+reg(btn,"BackgroundColor3","BTN")
+reg(btn,"TextColor3","TXT")
+local dot=Instance.new("Frame")
+dot.Size=UDim2.new(0,8,0,8)
+dot.Position=UDim2.new(1,-16,0.5,-4)
+dot.BackgroundColor3=Color3.fromRGB(150,150,160)
+dot.BorderSizePixel=0
+dot.ZIndex=9
+dot.Parent=btn
+Instance.new("UICorner",dot).CornerRadius=UDim.new(1,0)
+tab.setY(Y+30)
+local state={on=false,btn=btn,dot=dot,color=color}
+buttonsRegistry[#buttonsRegistry+1]=state
+btn.MouseButton1Click:Connect(function()
+state.on=not state.on
+pcall(function()
+tsv:Create(btn,TweenInfo.new(0.15),{BackgroundColor3=state.on and (color or T.ACC) or T.BTN}):Play()
+dot.BackgroundColor3=state.on and T.GREEN or Color3.fromRGB(150,150,160)
+end)
+pcall(fn,state.on)
+end)
+return btn
+end
+local function applyTheme(newThemeName)
+g.Theme=newThemeName
+saveG()
+local NT=Themes[newThemeName] or Themes.white
+for _,entry in ipairs(themeRegistry) do
+pcall(function()
+if entry.obj and entry.obj.Parent and NT[entry.key] then
+entry.obj[entry.prop]=NT[entry.key]
+end
+end)
+end
+for _,tb in ipairs(tabButtons) do
+pcall(function()
+local isActive=pages[tb.name].page.Visible
+tb.btn.TextColor3=isActive and Color3.fromRGB(255,255,255) or NT.SUB
+tb.btn.BackgroundColor3=isActive and NT.ACC or NT.CARD
+end)
+end
+for _,st in ipairs(buttonsRegistry) do
+pcall(function()
+if st.btn and st.btn.Parent then
+st.btn.BackgroundColor3=st.on and (st.color or NT.ACC) or NT.BTN
+st.btn.TextColor3=NT.TXT
+st.dot.BackgroundColor3=st.on and NT.GREEN or Color3.fromRGB(150,150,160)
+end
+end)
+end
+T=NT
+end
+
+local pScroll=Instance.new("ScrollingFrame")
+pScroll.Size=UDim2.new(1,-8,1,-8)
+pScroll.Position=UDim2.new(0,4,0,4)
+pScroll.BackgroundTransparency=1
+pScroll.BorderSizePixel=0
+pScroll.ScrollBarThickness=5
+pScroll.ScrollBarImageColor3=T.GOLD
+pScroll.AutomaticCanvasSize=Enum.AutomaticSize.Y
+pScroll.CanvasSize=UDim2.new(0,0,0,0)
+pScroll.ZIndex=9
+Instance.new("UIListLayout",pScroll).Padding=UDim.new(0,4)
+
+local fScroll=Instance.new("ScrollingFrame")
+fScroll.Size=UDim2.new(1,-8,1,-8)
+fScroll.Position=UDim2.new(0,4,0,4)
+fScroll.BackgroundTransparency=1
+fScroll.BorderSizePixel=0
+fScroll.ScrollBarThickness=5
+fScroll.ScrollBarImageColor3=T.GOLD
+fScroll.AutomaticCanvasSize=Enum.AutomaticSize.Y
+fScroll.CanvasSize=UDim2.new(0,0,0,0)
+fScroll.ZIndex=9
+Instance.new("UIListLayout",fScroll).Padding=UDim.new(0,4)
+
+local function isFriend(pl)
+for _,fid in ipairs(g.Friends) do
+if fid==pl.UserId then return true end
+end
+return false
+end
+
+local function toggleFriend(pl)
+local found=false
+for i,fid in ipairs(g.Friends) do
+if fid==pl.UserId then
+table.remove(g.Friends,i)
+found=true
+break
+end
+end
+if not found then
+g.Friends[#g.Friends+1]=pl.UserId
+end
+saveG()
+end
+
+local function getNearestPlayer()
+local cc2=l.Character
+local chrp=cc2 and cc2:FindFirstChild("HumanoidRootPart")
+if not chrp then return nil end
+local nearest=nil
+local nearestDist=g.AutoRange
+for _,pl in ipairs(p:GetPlayers()) do
+if pl~=l and pl.Parent and not isFriend(pl) then
+local pchr=pl.Character and pl.Character:FindFirstChild("HumanoidRootPart")
+if pchr then
+local d=(pchr.Position-chrp.Position).Magnitude
+if d<nearestDist then
+nearestDist=d
+nearest=pl
+end
+end
+end
+end
+return nearest
+end
+
+local playerCards={}
+local friendCards={}
+local highlight=nil
+local antiRagConn=nil
+local magnetConn=nil
+local manualRagConn=nil
+local autoRagConn=nil
+local autoMagnetConn=nil
+local lastPlayerList={}
+local radiusCircle=nil
+local autoBtn=nil
+
+local function ragLoop()
+pcall(function()
+local cc=l.Character
+if not cc or not cc.Parent then return end
+local hum=cc:FindFirstChildOfClass("Humanoid")
+if hum then
+local st=hum:GetState()
+if st==Enum.HumanoidStateType.Physics or st==Enum.HumanoidStateType.Ragdoll or st==Enum.HumanoidStateType.FallingDown then
+hum:ChangeState(Enum.HumanoidStateType.Running)
+if workspace.CurrentCamera then workspace.CurrentCamera.CameraSubject=hum end
+pcall(function()
+local pm=l.PlayerScripts:FindFirstChild("PlayerModule")
+if pm then require(pm:FindFirstChild("ControlModule")):Enable() end
+end)
+end
+end
+for _,obj in ipairs(cc:GetDescendants()) do
+if obj:IsA("Motor6D") and not obj.Enabled then obj.Enabled=true end
+end
+end)
+end
+
+local function removeHighlight()
+if highlight then pcall(function() highlight:Destroy() end) highlight=nil end
+end
+
+local function addHighlight(tp)
+removeHighlight()
+pcall(function()
+local tc=tp.Character
+if not tc then return end
+highlight=Instance.new("Highlight",tc)
+highlight.FillColor=Color3.fromRGB(255,255,255)
+highlight.OutlineColor=Color3.fromRGB(255,255,255)
+highlight.FillTransparency=0.7
+highlight.OutlineTransparency=0
+highlight.DepthMode=Enum.HighlightDepthMode.AlwaysOnTop
+end)
+end
+
+local function removeCircle()
+if radiusCircle then pcall(function() radiusCircle:Destroy() end) radiusCircle=nil end
+end
+
+local function createCircle()
+removeCircle()
+pcall(function()
+local part=Instance.new("Part")
+part.Name="MKV_Radius"
+part.Shape=Enum.PartType.Cylinder
+part.Size=Vector3.new(0.1,g.AutoRange*2,g.AutoRange*2)
+part.Color=Color3.fromRGB(220,50,50)
+part.Material=Enum.Material.Neon
+part.Transparency=0.95
+part.Anchored=true
+part.CanCollide=false
+part.CanQuery=false
+part.CanTouch=false
+part.CastShadow=false
+part.Parent=workspace
+radiusCircle=part
+end)
+end
+
+local function stopMagnet()
+g.MagnetOn=false
+if magnetConn then magnetConn:Disconnect() magnetConn=nil end
+if antiRagConn then antiRagConn:Disconnect() antiRagConn=nil end
+removeHighlight()
+pcall(function()
+local cc=l.Character
+local hum=cc and cc:FindFirstChildOfClass("Humanoid")
+if hum then hum.WalkSpeed=16 end
+end)
+g.Target=nil
+end
+
+local function startMagnet(tp)
+if not tp or not tp.Parent then return end
+stopMagnet()
+g.Target=tp
+g.MagnetOn=true
+addHighlight(tp)
+antiRagConn=r.Heartbeat:Connect(ragLoop)
+magnetConn=r.Heartbeat:Connect(function(dt)
+if not g.MagnetOn then return end
+pcall(function()
+local tc=tp.Character
+if not tc then stopMagnet() return end
+if highlight and highlight.Parent~=tc then addHighlight(tp) end
+local thrp=tc:FindFirstChild("HumanoidRootPart")
+local cc2=l.Character
+local chrp=cc2 and cc2:FindFirstChild("HumanoidRootPart")
+if not thrp or not chrp then return end
+local dir=thrp.Position-chrp.Position
+local dist=dir.Magnitude
+if dist<1.5 then return end
+local step=MAGNET_SPEED*dt
+if step>dist then step=dist end
+local newPos=chrp.Position+dir.Unit*step
+chrp.CFrame=CFrame.new(newPos,newPos+dir.Unit)
+end)
+end)
+end
+
+local function stopAutoMagnet()
+g.AutoMagnet=false
+if autoMagnetConn then autoMagnetConn:Disconnect() autoMagnetConn=nil end
+if autoRagConn then autoRagConn:Disconnect() autoRagConn=nil end
+removeCircle()
+if autoBtn then autoBtn.BackgroundColor3=T.BTN end
+pcall(function()
+local cc=l.Character
+local hum=cc and cc:FindFirstChildOfClass("Humanoid")
+if hum then hum.WalkSpeed=16 end
+end)
+end
+
+local function startAutoMagnet()
+g.AutoMagnet=true
+if not antiRagConn and not manualRagConn then
+autoRagConn=r.Heartbeat:Connect(ragLoop)
+end
+if g.ShowCircle then
+createCircle()
+end
+if autoBtn then autoBtn.BackgroundColor3=T.ACC end
+autoMagnetConn=r.Heartbeat:Connect(function(dt)
+if not g.AutoMagnet then return end
+pcall(function()
+local cc=l.Character
+local chrp=cc and cc:FindFirstChild("HumanoidRootPart")
+if not chrp then return end
+local nearest=getNearestPlayer()
+if not nearest then
+if radiusCircle then removeCircle() end
+return
+end
+local nc=nearest.Character
+local nhrp=nc and nc:FindFirstChild("HumanoidRootPart")
+if not nhrp then
+if radiusCircle then removeCircle() end
+return
+end
+local dir=nhrp.Position-chrp.Position
+local dist=dir.Magnitude
+if dist<1.5 then return end
+if radiusCircle and not radiusCircle.Parent then createCircle() end
+local step=MAGNET_SPEED*dt
+if step>dist then step=dist end
+local newPos=chrp.Position+dir.Unit*step
+chrp.CFrame=CFrame.new(newPos,newPos+dir.Unit)
+if radiusCircle and radiusCircle.Parent then
+radiusCircle.CFrame=CFrame.new(chrp.Position-Vector3.new(0,3,0))*CFrame.Angles(0,0,math.rad(90))
+end
+end)
+end)
+end
+
+local function playersListChanged()
+local now={}
+for _,pl in ipairs(p:GetPlayers()) do
+if pl~=l and pl.Parent then now[pl]=true end
+end
+local changed=false
+for pl,_ in pairs(now) do if not lastPlayerList[pl] then changed=true break end end
+for pl,_ in pairs(lastPlayerList) do if not now[pl] then changed=true break end end
+lastPlayerList=now
+return changed
+end
+
+local function updateDistances()
+local cc2=l.Character
+local chrp=cc2 and cc2:FindFirstChild("HumanoidRootPart")
+if not chrp then return end
+for _,data in ipairs(playerCards) do
+pcall(function()
+if data.card and data.card.Parent and data.pl and data.pl.Character then
+local pchr=data.pl.Character:FindFirstChild("HumanoidRootPart")
+if pchr then
+local d=math.floor((pchr.Position-chrp.Position).Magnitude)
+data.distLbl.Text=d.."st"
+end
+end
+end)
+end
+end
+
+local function refreshPlayers()
+for _,btn in pairs(playerCards) do pcall(function() btn.card:Destroy() end) end
+playerCards={}
+for _,pl in ipairs(p:GetPlayers()) do
+if pl~=l and pl.Parent then
+local cc2=l.Character
+local chrp=cc2 and cc2:FindFirstChild("HumanoidRootPart")
+local pchr=pl.Character and pl.Character:FindFirstChild("HumanoidRootPart")
+local dist=0
+if chrp and pchr then dist=math.floor((pchr.Position-chrp.Position).Magnitude) end
+local fr=isFriend(pl)
+
+local card=Instance.new("TextButton")
+card.Size=UDim2.new(1,-8,0,52)
+card.BackgroundColor3=(pl==g.Target) and T.ACC or T.CARD
+card.BackgroundTransparency=fr and 0.5 or 0
+card.BorderSizePixel=0
+card.Text=""
+card.ZIndex=10
+card.AutoButtonColor=false
+card.Parent=pScroll
+Instance.new("UICorner",card).CornerRadius=UDim.new(0,8)
+local cs=Instance.new("UIStroke",card)
+cs.Thickness=(pl==g.Target) and 2 or 1
+cs.Color=(pl==g.Target) and T.GOLD or T.SUB
+
+local icon=Instance.new("TextLabel")
+icon.Size=UDim2.new(0,36,0,36)
+icon.Position=UDim2.new(0,8,0.5,-18)
+icon.BackgroundColor3=T.BG
+icon.BorderSizePixel=0
+icon.Text="🪪"
+icon.TextScaled=true
+icon.Font=Enum.Font.GothamBold
+icon.ZIndex=11
+icon.Parent=card
+Instance.new("UICorner",icon).CornerRadius=UDim.new(0,18)
+
+local nameLbl=Instance.new("TextLabel")
+nameLbl.Size=UDim2.new(1,-110,0,18)
+nameLbl.Position=UDim2.new(0,52,0,6)
+nameLbl.BackgroundTransparency=1
+nameLbl.Text=(pl.DisplayName or pl.Name)..(pl==g.Target and "  🪃" or "")
+nameLbl.TextColor3=(pl==g.Target) and Color3.fromRGB(255,255,255) or T.TXT
+nameLbl.TextSize=13
+nameLbl.Font=Enum.Font.GothamBold
+nameLbl.TextXAlignment=Enum.TextXAlignment.Left
+nameLbl.ZIndex=11
+nameLbl.Parent=card
+
+local userLbl=Instance.new("TextLabel")
+userLbl.Size=UDim2.new(1,-110,0,16)
+userLbl.Position=UDim2.new(0,52,0,26)
+userLbl.BackgroundTransparency=1
+userLbl.Text="@"..pl.Name
+userLbl.TextColor3=(pl==g.Target) and Color3.fromRGB(255,220,220) or T.SUB
+userLbl.TextSize=11
+userLbl.Font=Enum.Font.Gotham
+userLbl.TextXAlignment=Enum.TextXAlignment.Left
+userLbl.ZIndex=11
+userLbl.Parent=card
+
+local distLbl=Instance.new("TextLabel")
+distLbl.Size=UDim2.new(0,50,0,16)
+distLbl.Position=UDim2.new(1,-56,0.5,-8)
+distLbl.BackgroundTransparency=1
+distLbl.Text=dist.."st"
+distLbl.TextColor3=(pl==g.Target) and Color3.fromRGB(255,255,255) or T.SUB
+distLbl.TextSize=11
+distLbl.Font=Enum.Font.GothamBold
+distLbl.ZIndex=11
+distLbl.Parent=card
+
+card.MouseButton1Click:Connect(function()
+pcall(function()
+if fr then return end
+if g.AutoMagnet then
+stopAutoMagnet()
+end
+if g.Target==pl then
+stopMagnet()
+else
+startMagnet(pl)
+end
+refreshPlayers()
+end)
+end)
+playerCards[#playerCards+1]={card=card,distLbl=distLbl,pl=pl}
+end
+end
+end
+
+local function refreshFriends()
+for _,btn in pairs(friendCards) do pcall(function() btn:Destroy() end) end
+friendCards={}
+for _,pl in ipairs(p:GetPlayers()) do
+if pl~=l and pl.Parent then
+local fr=isFriend(pl)
+local card=Instance.new("TextButton")
+card.Size=UDim2.new(1,-8,0,52)
+card.BackgroundColor3=T.CARD
+card.BackgroundTransparency=fr and 0.5 or 0
+card.BorderSizePixel=0
+card.Text=""
+card.ZIndex=10
+card.AutoButtonColor=false
+card.Parent=fScroll
+Instance.new("UICorner",card).CornerRadius=UDim.new(0,8)
+local cs=Instance.new("UIStroke",card)
+cs.Thickness=1
+cs.Color=fr and T.GREEN or T.SUB
+
+local icon=Instance.new("TextLabel")
+icon.Size=UDim2.new(0,36,0,36)
+icon.Position=UDim2.new(0,8,0.5,-18)
+icon.BackgroundColor3=T.BG
+icon.BorderSizePixel=0
+icon.Text="👤"
+icon.TextScaled=true
+icon.Font=Enum.Font.GothamBold
+icon.ZIndex=11
+icon.Parent=card
+Instance.new("UICorner",icon).CornerRadius=UDim.new(0,18)
+
+local nameLbl=Instance.new("TextLabel")
+nameLbl.Size=UDim2.new(1,-110,0,18)
+nameLbl.Position=UDim2.new(0,52,0,6)
+nameLbl.BackgroundTransparency=1
+nameLbl.Text=(pl.DisplayName or pl.Name)
+nameLbl.TextColor3=T.TXT
+nameLbl.TextSize=13
+nameLbl.Font=Enum.Font.GothamBold
+nameLbl.TextXAlignment=Enum.TextXAlignment.Left
+nameLbl.ZIndex=11
+nameLbl.Parent=card
+
+local userLbl=Instance.new("TextLabel")
+userLbl.Size=UDim2.new(1,-110,0,16)
+userLbl.Position=UDim2.new(0,52,0,26)
+userLbl.BackgroundTransparency=1
+userLbl.Text="@"..pl.Name
+userLbl.TextColor3=T.SUB
+userLbl.TextSize=11
+userLbl.Font=Enum.Font.Gotham
+userLbl.TextXAlignment=Enum.TextXAlignment.Left
+userLbl.ZIndex=11
+userLbl.Parent=card
+
+local statLbl=Instance.new("TextLabel")
+statLbl.Size=UDim2.new(0,30,0,20)
+statLbl.Position=UDim2.new(1,-38,0.5,-10)
+statLbl.BackgroundTransparency=1
+statLbl.Text=fr and "🔋" or "🪫"
+statLbl.TextScaled=true
+statLbl.ZIndex=11
+statLbl.Parent=card
+
+card.MouseButton1Click:Connect(function()
+pcall(function()
+toggleFriend(pl)
+refreshFriends()
+refreshPlayers()
+end)
+end)
+friendCards[#friendCards+1]=card
+end
+end
+end
+
+mkSection("👁️‍🗨️ ЦЕЛИ","Выбери цель (тап → магнит)")
+
+local playersFrame=Instance.new("Frame")
+playersFrame.Size=UDim2.new(1,-24,0,260)
+playersFrame.Position=UDim2.new(0,12,0,pages["👁️‍🗨️ ЦЕЛИ"].getY())
+playersFrame.BackgroundColor3=T.BG
+playersFrame.BorderSizePixel=0
+playersFrame.ZIndex=8
+playersFrame.Parent=pages["👁️‍🗨️ ЦЕЛИ"].page
+Instance.new("UICorner",playersFrame).CornerRadius=UDim.new(0,6)
+reg(playersFrame,"BackgroundColor3","BG")
+pages["👁️‍🗨️ ЦЕЛИ"].setY(pages["👁️‍🗨️ ЦЕЛИ"].getY()+270)
+pScroll.Parent=playersFrame
+
+pcall(refreshPlayers)
+task.spawn(function()
+while sg.Parent do
+task.wait(1)
+pcall(function()
+if playersListChanged() then
+refreshPlayers()
+elseif g.MagnetOn then
+updateDistances()
+end
+end)
+end
+end)
+
+mkSection("🔩 НАСТРОЙКИ","Авто-магнит")
+
+autoBtn=mkBtn("🔩 НАСТРОЙКИ","📡 АВТО-МАГНИТ",function()
+if g.AutoMagnet then
+stopAutoMagnet()
+else
+startAutoMagnet()
+end
+end)
+
+local ss=mkSlider("🔩 НАСТРОЙКИ","🧫 РАДИУС АВТО-МАГНИТА",5,50,g.AutoRange,function(v)
+g.AutoRange=math.floor(v)
+saveG()
+if radiusCircle and radiusCircle.Parent then
+radiusCircle.Size=Vector3.new(0.1,g.AutoRange*2,g.AutoRange*2)
+end
+end)
+
+mkBtn("🔩 НАСТРОЙКИ","🔴 ПОКАЗЫВАТЬ КРУГ",function(on)
+g.ShowCircle=on
+saveG()
+if on and g.AutoMagnet then
+createCircle()
+else
+removeCircle()
+end
+end)
+
+mkSection("🔩 НАСТРОЙКИ","Темы")
+
+mkBtn("🔩 НАСТРОЙКИ","⚪ ЭЛИТНЫЙ ПЕПЕЛ",function()
+applyTheme("white")
+end)
+
+mkBtn("🔩 НАСТРОЙКИ","⚫ БЕЛЫЙ ШОКОЛАД",function()
+applyTheme("black")
+end)
+
+mkSection("🔩 НАСТРОЙКИ","Телепорт")
+
+local tpBtn
+local rBtn
+rBtn=mkBtn("🔩 НАСТРОЙКИ","📍 ЗАПОМНИТЬ МЕСТО",function()
+pcall(function()
+local chrp=l.Character and l.Character:FindFirstChild("HumanoidRootPart")
+if chrp then
+g.Saved=chrp.CFrame
+saveG()
+if tpBtn then tpBtn.Visible=true end
+local old=rBtn.Text
+rBtn.Text="  ✅ СОХРАНЕНО"
+task.delay(1,function() pcall(function() rBtn.Text=old end) end)
+end
+end)
+end)
+
+tpBtn=mkBtn("🔩 НАСТРОЙКИ","🥏 ТЕЛЕПОРТ",function()
+pcall(function()
+if g.Saved then
+local chrp=l.Character and l.Character:FindFirstChild("HumanoidRootPart")
+if chrp then chrp.CFrame=g.Saved end
+end
+end)
+end)
+tpBtn.Visible=g.Saved~=nil
+
+mkSection("🔩 НАСТРОЙКИ","Защита")
+
+mkBtn("🔩 НАСТРОЙКИ","⛓️‍💥 ANTI-RAGDOLL",function(on)
+if on then
+if not manualRagConn then
+manualRagConn=r.Heartbeat:Connect(ragLoop)
+end
+else
+if manualRagConn then manualRagConn:Disconnect() manualRagConn=nil end
+end
+end)
+
+local noclipConn
+mkBtn("🔩 НАСТРОЙКИ","🩻 СКВОЗЬ СТЕНЫ",function(on)
+if on then
+if noclipConn then noclipConn:Disconnect() end
+noclipConn=r.Stepped:Connect(function()
+pcall(function()
+local cc=l.Character
+if cc then
+for _,v in ipairs(cc:GetDescendants()) do
+if v:IsA("BasePart") and not v:FindFirstAncestorOfClass("Tool") then
+v.CanCollide=false
+end
+end
+end
+end)
+end)
+else
+if noclipConn then noclipConn:Disconnect() noclipConn=nil end
+end
+end)
+
+mkSection("📃 ДРУЗЬЯ","Отметь друзей (🪫 → 🔋)")
+
+local friendsFrame=Instance.new("Frame")
+friendsFrame.Size=UDim2.new(1,-24,0,260)
+friendsFrame.Position=UDim2.new(0,12,0,pages["📃 ДРУЗЬЯ"].getY())
+friendsFrame.BackgroundColor3=T.BG
+friendsFrame.BorderSizePixel=0
+friendsFrame.ZIndex=8
+friendsFrame.Parent=pages["📃 ДРУЗЬЯ"].page
+Instance.new("UICorner",friendsFrame).CornerRadius=UDim.new(0,6)
+reg(friendsFrame,"BackgroundColor3","BG")
+pages["📃 ДРУЗЬЯ"].setY(pages["📃 ДРУЗЬЯ"].getY()+270)
+fScroll.Parent=friendsFrame
+
+pcall(refreshFriends)
+task.spawn(function()
+while sg.Parent do
+task.wait(2)
+pcall(refreshFriends)
+end
+end)
+
+local fdrag=false
+local fstart,fpos
+hd.InputBegan:Connect(function(i)
+if i.UserInputType==Enum.UserInputType.MouseButton1 or i.UserInputType==Enum.UserInputType.Touch then
+fdrag=true
+fstart=i.Position
+fpos=f.Position
+end
+end)
+
+u.InputChanged:Connect(function(i)
+if fdrag and (i.UserInputType==Enum.UserInputType.MouseMovement or i.UserInputType==Enum.UserInputType.Touch) then
+local d=i.Position-fstart
+f.Position=UDim2.new(fpos.X.Scale,fpos.X.Offset+d.X,fpos.Y.Scale,fpos.Y.Offset+d.Y)
+end
+end)
+
+u.InputEnded:Connect(function(i)
+if i.UserInputType==Enum.UserInputType.MouseButton1 or i.UserInputType==Enum.UserInputType.Touch then fdrag=false end
+end)
+
+local bdrag=false
+local bstart=nil
+local bpos=nil
+local moved=false
+b.InputBegan:Connect(function(i)
+if i.UserInputType==Enum.UserInputType.MouseButton1 or i.UserInputType==Enum.UserInputType.Touch then
+bstart=i.Position
+bpos=b.Position
+bdrag=true
+moved=false
+end
+end)
+
+u.InputChanged:Connect(function(i)
+if bdrag and not fdrag and (i.UserInputType==Enum.UserInputType.MouseMovement or i.UserInputType==Enum.UserInputType.Touch) then
+local d=i.Position-bstart
+if d.Magnitude>5 then moved=true end
+b.Position=UDim2.new(bpos.X.Scale,bpos.X.Offset+d.X,bpos.Y.Scale,bpos.Y.Offset+d.Y)
+end
+end)
+
+u.InputEnded:Connect(function(i)
+if i.UserInputType==Enum.UserInputType.MouseButton1 or i.UserInputType==Enum.UserInputType.Touch then bdrag=false end
+end)
+
+local open=false
+local animating=false
+local function toggle()
+if animating then return end
+animating=true
+open=not open
+pcall(function()
+if open then
+f.Visible=true
+f.BackgroundTransparency=1
+local tw=tsv:Create(f,TweenInfo.new(0.2),{BackgroundTransparency=0})
+tw:Play()
+tw.Completed:Wait()
+else
+local tw=tsv:Create(f,TweenInfo.new(0.2),{BackgroundTransparency=1})
+tw:Play()
+tw.Completed:Wait()
+f.Visible=false
+end
+end)
+animating=false
+end
+
+b.MouseButton1Click:Connect(function()
+if not moved then toggle() end
+end)
+
+l.CharacterAdded:Connect(function(ch)
+c=ch
+h=ch:FindFirstChildOfClass("Humanoid") or ch:WaitForChild("Humanoid",10)
+if g.MagnetOn then stopMagnet() end
+if g.AutoMagnet then stopAutoMagnet() end
+end)
